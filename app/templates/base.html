@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>{% block title %}Библиотека{% endblock %} — Библиотека</title>
+
+        {# FIX: тема применяется до CSS и до отрисовки — без вспышки белого #}
+        <script src="{{ url_for('static', filename='theme.js') }}"></script>
+
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+        {% block head %}{% endblock %}
+    </head>
+    <body>
+        <header class="topbar">
+            <a href="{{ url_for('index.index') }}" class="brand"
+                >📚 Библиотека</a
+            >
+            <button id="theme-toggle" class="theme-toggle" type="button">
+                🖥
+            </button>
+        </header>
+
+        {% block toolbar %}{% endblock %}
+
+        <main class="container">{% block content %}{% endblock %}</main>
+
+        {% block scripts %}{% endblock %}
+    </body>
+</html>

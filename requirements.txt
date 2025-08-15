@@ -1,0 +1,4 @@
+flask>=3.0,<4
+markdown>=3.5
+watchdog>=4.0
+pytest>=8.0

@@ -1,0 +1,139 @@
+{% extends "base.html" %} {% block title %}Библиотека{% endblock %} {% block
+content %}
+<h1>Библиотека</h1>
+<a href="{{ url_for('scan.update_books') }}" style="margin-left: 10px"
+    >Обновить библиотеку</a
+>
+<form method="get" class="search-form">
+    <input type="search" name="q" value="{{ query }}" placeholder="Поиск..." />
+    <button type="submit">Искать</button>
+    {% if query or tags or author or favorite %}
+    <a href="{{ url_for('index.index') }}">Сброс</a>
+    {% endif %}
+    <a href="{{ url_with(favorite='1') }}">Избранное</a>
+</form>
+
+<script>
+    let suggestTimer = null;
+    async function suggest(q) {
+        clearTimeout(suggestTimer);
+        if (q.length < 2) return;
+        suggestTimer = setTimeout(async () => {
+            const r = await fetch(
+                '{{ url_for("index.suggest") }}?q=' + encodeURIComponent(q),
+            );
+            const data = await r.json();
+            const dl = document.getElementById("suggestions");
+            dl.innerHTML = "";
+            [...data.titles, ...data.authors, ...data.tags].forEach((v) => {
+                const opt = document.createElement("option");
+                opt.value = v;
+                dl.appendChild(opt);
+            });
+        }, 200);
+    }
+</script>
+<br />
+
+{% if tags %}
+<div style="margin: 10px 0">
+    {% for t in tags %}
+    <span class="tag-chip">
+        {{ t }}
+        <a
+            href="{{ url_with(tag=(tags | reject('equalto', t) | list) or None) }}"
+            class="tag-remove"
+            >✕</a
+        >
+    </span>
+    {% endfor %}
+</div>
+{% endif %}
+
+<table>
+    <tr>
+        <!-- <th><a href="{{ url_with(sort='id') }}">ID</a></th> -->
+        <th>★</th>
+        <th><a href="{{ url_with(sort='author') }}">Автор</a></th>
+        <th><a href="{{ url_with(sort='title') }}">Название</a></th>
+        <th>Оригинальное название</th>
+        <th>Язык</th>
+        <th>Описание</th>
+        <th>Теги</th>
+    </tr>
+    {% for book in books %}
+    <tr>
+        <!-- <td data-label="ID">{{ book['id'] }}</td> -->
+        <td data-label="★">
+            {% if book['favorite'] %}
+            <a href="...">⭐</a>
+            {% else %}
+            <a href="...">☆</a>
+            {% endif %}
+        </td>
+        <td data-label="Автор">
+            <a href="{{ url_with(author=book['author']) }}"
+                >{{ book['author'] }}</a
+            >
+        </td>
+        <td data-label="Название">
+            <a href="{{ url_for('book.view_book', book_id=book['id']) }}"
+                >{{ book['title'] }}</a
+            >
+        </td>
+        <td data-label="Оригинал">{{ book['orig_name'] }}</td>
+        <td data-label="Язык">{{ book['lang'] }}</td>
+        <td data-label="Описание">{{ book['description'] }}</td>
+        <td data-label="Теги">
+            {% for tag in book['tags'] %} {% if tag not in tags %}
+            <a class="tag-chip" href="{{ url_with(tag=(tags + [tag])) }}"
+                >{{ tag }}</a
+            >
+            {% else %}
+            <span class="tag-chip tag-chip-active">{{ tag }}</span>
+            {% endif %} {% endfor %}
+        </td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="8" style="text-align: center; padding: 20px">
+            Ничего не найдено.
+            <a href="{{ url_for('index.index') }}">Сбросить фильтры</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% if pages > 1 %}
+<nav class="pagination" aria-label="Страницы">
+    {% if page > 1 %}
+    <a href="{{ url_with(page=1, keep_page=True) }}" class="page-link"
+        >« Первая</a
+    >
+    <a href="{{ url_with(page=page-1, keep_page=True) }}" class="page-link"
+        >← Назад</a
+    >
+    {% else %}
+    <span class="page-link disabled">« Первая</span>
+    <span class="page-link disabled">← Назад</span>
+    {% endif %}
+
+    <span class="page-info">
+        Страница {{ page }} из {{ pages }} · всего {{ total }}
+    </span>
+
+    {% if page < pages %}
+    <a href="{{ url_with(page=page+1, keep_page=True) }}" class="page-link"
+        >Вперёд →</a
+    >
+    <a href="{{ url_with(page=pages, keep_page=True) }}" class="page-link"
+        >Последняя »</a
+    >
+    {% else %}
+    <span class="page-link disabled">Вперёд →</span>
+    <span class="page-link disabled">Последняя »</span>
+    {% endif %}
+</nav>
+{% elif total > 0 %}
+<p class="muted" style="margin-top: 12px">Всего {{ total }} книг</p>
+{% endif %} {% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ book['title'] }} — Библиотека{% endblock %}
+
+{% block content %}
+<div class="scroll-top-btn" id="scrollTopBtn"><i>↑</i></div>
+
+<p><a href="{{ url_for('index.index') }}">← Назад к списку</a> ·
+   <a href="{{ url_for('book.edit_book', book_id=book['id']) }}">Редактировать</a></p>
+
+<details class="book-meta" {% if not parallel %}open{% endif %}>
+    <summary>О книге</summary>
+    <p><b>Автор:</b> <a href="{{ url_with(author=book['author']) }}">{{ book['author'] }}</a></p>
+    <p><b>Теги:</b>
+      {% for tag in book['tags'] %}
+        <a class="tag-chip" href="{{ url_for('index.index', tag=tag) }}">{{ tag }}</a>
+      {% endfor %}
+    </p>
+    <div class="description"><b>Описание:</b> {{ book['description'] }}</div>
+    <p><b>Язык:</b> {{ book['lang'] }} · <b>Избранное:</b>
+        <a href="{{ url_for('favorites.toggle_fav', book_id=book['id'], **{'from': 'book'}) }}"
+           style="font-size:22px; text-decoration:none;">
+            {{ '⭐' if book['favorite'] else '☆' }}
+        </a>
+    </p>
+</details>
+
+{% if book['lang'] == "en-ru" %}
+<div class="lang-switch">
+    <a href="{{ url_for('book.view_book', book_id=book['id'], ver='ru') }}"
+       class="lang-btn {% if ver == 'ru' %}lang-btn-active{% endif %}">RU</a>
+    <a href="{{ url_for('book.view_book', book_id=book['id'], ver='en') }}"
+       class="lang-btn {% if ver == 'en' %}lang-btn-active{% endif %}">EN</a>
+    <a href="{{ url_for('book.view_book', book_id=book['id'], ver='en-ru') }}"
+       class="lang-btn {% if ver == 'en-ru' %}lang-btn-active{% endif %}">EN-RU (2 колонки)</a>
+    <a href="{{ url_for('book.view_book', book_id=book['id'], ver='stacked') }}"
+       class="lang-btn {% if ver == 'stacked' %}lang-btn-active{% endif %}">EN-RU (построчно)</a>
+</div>
+{% endif %}
+
+<br>
+
+{# FIX: двухколоночная раскладка — TOC + контент #}
+<div class="book-layout {% if not has_toc %}no-toc{% endif %}">
+    {% if has_toc %}
+    <aside class="book-toc book-toc-desktop">
+        <details {% if not parallel %}open{% endif %}>
+            <summary>Оглавление</summary>
+            {{ toc|safe }}
+        </details>
+    </aside>
+    {% endif %}
+    <article class="book-content {{ 'parallel' if mode == 'parallel' else ('stacked-mode' if mode == 'stacked' else 'markdown-body') }}">
+        {{ content|safe }}
+    </article>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='book.js') }}"></script>
+{% endblock %}

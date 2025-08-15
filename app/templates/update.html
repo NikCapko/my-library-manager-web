@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Обновление библиотеки{% endblock %}
+
+{% block head %}
+<style>
+    .scan-card {
+        max-width: 720px;
+        padding: 20px;
+        border: 1px solid var(--border-strong);
+        border-radius: 10px;
+        background: var(--bg-soft);
+        margin: 20px 0;
+    }
+    .scan-row {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 8px 16px;
+        align-items: baseline;
+        margin: 6px 0;
+    }
+    .scan-row dt { font-weight: 600; color: var(--text-muted); }
+    .scan-row dd { margin: 0; }
+
+    .status-ok      { color: #1e8449; font-weight: 600; }
+    .status-error   { color: var(--danger); font-weight: 600; }
+    .status-running { color: #b9770e; font-weight: 600; }
+    .status-cancelled { color: var(--text-muted); font-weight: 600; }
+
+    .progress {
+        height: 10px;
+        background: var(--bg-chip);
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+    .progress > div {
+        height: 100%;
+        background: var(--link);
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+
+    .btn-primary {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 18px;
+        font-size: 16px;
+        background: var(--link);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .btn-primary:hover { background: var(--link-hover); }
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .muted { color: var(--text-muted); }
+    .error-text { color: var(--danger); white-space: pre-wrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<p><a href="{{ url_for('index.index') }}">← Назад к списку</a></p>
+<h1>Обновление библиотеки</h1>
+
+{# ---------- Кнопка запуска ---------- #}
+<button id="start-btn" class="btn-primary" {% if running %}disabled{% endif %}>
+    {% if running %}Идёт обновление…{% else %}Обновить библиотеку{% endif %}
+</button>
+
+{# ---------- Прогресс текущего запуска ---------- #}
+<div id="running-block" class="scan-card" {% if not running %}style="display:none"{% endif %}>
+    <h2 style="margin-top:0">Сейчас выполняется</h2>
+    <dl class="scan-row">
+        <dt>Начато</dt>
+        <dd id="run-started">{{ running_run.started_human if running_run else '—' }}</dd>
+        <dt>Обработано</dt>
+        <dd id="run-count">
+            {{ current.count }}
+            {% if current.total %} из {{ current.total }}{% endif %}
+        </dd>
+    </dl>
+    <div class="progress"><div id="run-progress" style="width: {{ (current.count * 100 / current.total) if current.total else 0 }}%"></div></div>
+</div>
+
+{# ---------- Последнее обновление ---------- #}
+<div class="scan-card">
+    <h2 style="margin-top:0">Последнее обновление</h2>
+    {% if last %}
+        <dl class="scan-row">
+            <dt>Начато</dt>
+            <dd>{{ last.started_human }}</dd>
+
+            <dt>Завершено</dt>
+            <dd>{{ last.finished_human or '—' }}</dd>
+
+            {% if last.duration_human %}
+            <dt>Длительность</dt>
+            <dd>{{ last.duration_human }}</dd>
+            {% endif %}
+
+            <dt>Статус</dt>
+            <dd>
+                {% if last.status == 'ok' %}
+                    <span class="status-ok">✓ Успешно</span>
+                {% elif last.status == 'running' %}
+                    <span class="status-running">⏳ Выполняется</span>
+                {% elif last.status == 'cancelled' %}
+                    <span class="status-cancelled">⊘ Отменено</span>
+                {% else %}
+                    <span class="status-error">✗ Ошибка</span>
+                {% endif %}
+            </dd>
+
+            <dt>Обработано .bnf</dt>
+            <dd>{{ last.count }}{% if last.total %} из {{ last.total }}{% endif %}</dd>
+
+            {% if last.error %}
+            <dt>Ошибка</dt>
+            <dd class="error-text">{{ last.error }}</dd>
+            {% endif %}
+        </dl>
+    {% else %}
+        <p class="muted">Обновлений ещё не было. Нажмите «Обновить библиотеку».</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const startBtn = document.getElementById('start-btn');
+    const runningBlock = document.getElementById('running-block');
+    const runStarted = document.getElementById('run-started');
+    const runCount = document.getElementById('run-count');
+    const runProgress = document.getElementById('run-progress');
+
+    let pollTimer = null;
+
+    function fmtCount(c, t) {
+        return t ? c + ' из ' + t : String(c);
+    }
+
+    function setRunningUI(s) {
+        if (s.running) {
+            runningBlock.style.display = '';
+            startBtn.disabled = true;
+            startBtn.textContent = 'Идёт обновление…';
+            runCount.textContent = fmtCount(s.count || 0, s.total || 0);
+            const pct = s.total ? Math.min(100, Math.round(s.count * 100 / s.total)) : 0;
+            runProgress.style.width = pct + '%';
+        } else {
+            runningBlock.style.display = 'none';
+            startBtn.disabled = false;
+            startBtn.textContent = 'Обновить библиотеку';
+        }
+    }
+
+    async function poll() {
+        try {
+            const r = await fetch('{{ url_for("scan.update_status") }}', {
+                headers: { 'Accept': 'application/json' }
+            });
+            const s = await r.json();
+            setRunningUI(s);
+            if (s.running) {
+                pollTimer = setTimeout(poll, 1000);
+            } else {
+                // завершилось — перезагрузим страницу, чтобы показать «Последнее обновление»
+                window.location.reload();
+            }
+        } catch (e) {
+            pollTimer = setTimeout(poll, 2000);
+        }
+    }
+
+    async function startScan() {
+        startBtn.disabled = true;
+        try {
+            const r = await fetch('{{ url_for("scan.update_books_start") }}', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const s = await r.json();
+            setRunningUI(s);
+            if (s.running && !pollTimer) {
+                pollTimer = setTimeout(poll, 500);
+            }
+        } catch (e) {
+            startBtn.disabled = false;
+            alert('Не удалось запустить обновление: ' + e);
+        }
+    }
+
+    startBtn.addEventListener('click', startScan);
+
+    // если при загрузке страницы уже что-то идёт — начинаем поллинг
+    {% if running %}pollTimer = setTimeout(poll, 500);{% endif %}
+})();
+</script>
+{% endblock %}
