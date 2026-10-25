@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from flask import Blueprint, render_template, request
 
 from ..models import _fts_query, get_books

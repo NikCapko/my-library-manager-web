@@ -1,6 +1,7 @@
 """Сканирование библиотеки и фоновое обновление БД."""
 
-"""Сканирование библиотеки и фоновое обновление БД."""
+from __future__ import annotations
+
 import json
 import os
 import threading

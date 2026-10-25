@@ -1,5 +1,7 @@
 """Рендер markdown, параллельный режим, расширения markdown."""
 
+from __future__ import annotations
+
 import html
 import os
 import re
@@ -56,7 +58,7 @@ def render_parallel(en_file: str, ru_file: str) -> tuple[str, str, bool]:
     ru_lines += [""] * (n - len(ru_lines))
 
     parts = ['<div class="parallel-scroll"><table class="parallel">']
-    parts.append('<thead><tr><th>EN</th><th>RU</th></tr></thead>')
+    parts.append("<thead><tr><th>EN</th><th>RU</th></tr></thead>")
     parts.append("<tbody>")
     for en_line, ru_line in zip(en_lines, ru_lines):
         parts.append(
@@ -68,6 +70,7 @@ def render_parallel(en_file: str, ru_file: str) -> tuple[str, str, bool]:
     parts.append("</tbody></table></div>")
 
     return "", "".join(parts), True
+
 
 def render_stacked(en_file: str, ru_file: str) -> tuple[str, str, bool]:
     """EN построчно; RU свёрнут под каждой строкой, раскрывается по клику.
@@ -89,7 +92,7 @@ def render_stacked(en_file: str, ru_file: str) -> tuple[str, str, bool]:
     parts = [
         '<div class="stacked-toolbar">',
         '<button type="button" id="stackedToggleAll" data-state="collapsed">'
-        'Показать все RU</button>',
+        "Показать все RU</button>",
         "</div>",
         '<div class="stacked" id="stacked">',
     ]
@@ -98,9 +101,11 @@ def render_stacked(en_file: str, ru_file: str) -> tuple[str, str, bool]:
         ru_html = html.escape(ru_line) or "&nbsp;"
         # пустые пары — не рисуем кнопку, только EN, чтобы не плодить мусор
         if not ru_line.strip():
-            parts.append(f'<div class="stacked-pair stacked-pair-empty">'
-                         f'<div class="stacked-en">{en_html}</div>'
-                         f'</div>')
+            parts.append(
+                f'<div class="stacked-pair stacked-pair-empty">'
+                f'<div class="stacked-en">{en_html}</div>'
+                f"</div>"
+            )
         else:
             parts.append(
                 f'<div class="stacked-pair">'
@@ -108,13 +113,14 @@ def render_stacked(en_file: str, ru_file: str) -> tuple[str, str, bool]:
                 f'<button type="button" class="stacked-toggle" '
                 f'data-target="ru-{idx}" aria-expanded="false" '
                 f'title="Показать перевод">RU</button>'
-                f'</div>'
+                f"</div>"
                 f'<div class="stacked-ru" id="ru-{idx}" hidden>{ru_html}</div>'
-                f'</div>'
+                f"</div>"
             )
     parts.append("</div>")
 
     return "", "".join(parts), True
+
 
 def render_book_content(book: dict, ver: str | None) -> tuple[str, str, bool]:
     folder = os.path.dirname(book["bnf_path"])

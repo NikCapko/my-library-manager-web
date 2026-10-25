@@ -1,5 +1,7 @@
 """Доступ к данным: книги, теги, избранное."""
 
+from __future__ import annotations
+
 from datetime import datetime, timezone
 
 from .db import db
@@ -100,6 +102,7 @@ def count_books(
         cur.execute(sql, tuple(params))
         return cur.fetchone()[0]
 
+
 def get_books(
     query: str | None = None,
     tags: list[str] | None = None,
@@ -185,6 +188,7 @@ def get_books(
 
     return books, total
 
+
 def _fts_query(query: str) -> str:
     """Готовит строку для MATCH. Экранируем, добавляем '*' для префикса."""
     q = (query or "").strip()
@@ -219,13 +223,16 @@ def _build_query_parts(
 
     if query:
         # FTS-подзапрос вместо LIKE
-        where.append("books.id IN (SELECT rowid FROM books_fts WHERE books_fts MATCH ?)")
+        where.append(
+            "books.id IN (SELECT rowid FROM books_fts WHERE books_fts MATCH ?)"
+        )
         params.append(_fts_query(query))
 
     if favorite:
         where.append("books.favorite=1")
 
     return joins, where, params
+
 
 def get_book(book_id: int) -> dict | None:
     with db() as conn:
