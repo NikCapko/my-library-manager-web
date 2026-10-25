@@ -858,7 +858,7 @@ mark {
         grid-template-columns: minmax(0, 1fr);
     }
     .book-toc-desktop {
-        display: none;
+        /*  display: none; */
     }
 
     /* сам TOC — свёрнутый <details> сверху */
