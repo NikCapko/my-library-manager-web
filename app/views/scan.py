@@ -11,7 +11,7 @@ from flask import (
     url_for,
 )
 
-from ..config import LIBRARY_PATH
+from ..config import MYLIB_LIBRARY_PATH
 from ..models import scan_run_get, scan_run_last
 from ..scanning import start_scan, status
 
@@ -78,7 +78,7 @@ def update_books():
 @bp.route("/update_books/start", methods=["POST"])
 def update_books_start():
     """Запускает сканирование. Возвращает JSON для AJAX или redirect."""
-    ok = start_scan(LIBRARY_PATH)
+    ok = start_scan(MYLIB_LIBRARY_PATH)
     wants_json = (
         request.accept_mimetypes.best == "application/json"
         or request.headers.get("X-Requested-With") == "XMLHttpRequest"

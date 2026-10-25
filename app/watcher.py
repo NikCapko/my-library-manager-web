@@ -2,7 +2,7 @@
 import queue
 import threading
 
-from .config import LIBRARY_PATH
+from .config import MYLIB_LIBRARY_PATH
 
 try:
     from watchdog.observers import Observer
@@ -14,7 +14,7 @@ except ImportError:
 event_queue: "queue.Queue | None" = None
 
 
-def start_watcher(folder: str = LIBRARY_PATH) -> bool:
+def start_watcher(folder: str = MYLIB_LIBRARY_PATH) -> bool:
     global event_queue
     if not _AVAILABLE:
         print("watchdog/library_watcher недоступны — наблюдение не запущено")

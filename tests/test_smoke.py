@@ -2,7 +2,7 @@ import os
 import pytest
 
 os.environ.setdefault("LIBRARY_DB", ":memory:")
-os.environ.setdefault("LIBRARY_PATH", "/tmp")
+os.environ.setdefault("MYLIB_LIBRARY_PATH", "/tmp")
 
 from app import create_app
 from app.db import init_db
