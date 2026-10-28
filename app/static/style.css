@@ -378,7 +378,7 @@ button[type="submit"]:hover {
     border: 1px solid var(--border-strong);
     border-radius: 8px;
     background: var(--bg-soft);
-    font-size: 14px;
+    font-size: 16px;
 }
 .book-toc details > summary {
     cursor: pointer;
@@ -687,17 +687,17 @@ mark {
 /* --- Базис: тач-цели, шрифты форм --- */
 @media (max-width: 700px) {
     body {
-        font-size: 16px;
+        font-size: 18px;
     }
     .container {
         margin: 12px;
     }
     h1 {
-        font-size: 22px;
+        font-size: 24px;
         margin: 10px 0;
     }
     h2 {
-        font-size: 18px;
+        font-size: 20px;
         margin: 8px 0;
     }
 
@@ -711,7 +711,7 @@ mark {
     input,
     textarea,
     select {
-        font-size: 16px;
+        font-size: 18px;
         min-height: 44px;
     }
 }
@@ -722,11 +722,11 @@ mark {
         padding: 8px 12px;
     }
     .brand {
-        font-size: 16px;
+        font-size: 18px;
     }
     .theme-toggle {
         padding: 8px 10px;
-        font-size: 16px;
+        font-size: 18px;
     }
 }
 
